@@ -1,0 +1,30 @@
+name: "Coverage Badge"
+description: "Generates a flat SVG badge from a coverage.py data file - no external services, no API tokens."
+author: "devvienxyz"
+branding:
+  icon: "percent"
+  color: "green"
+
+inputs:
+  data-file:
+    description: "Path to the coverage data file produced by `coverage run` / `pytest --cov`."
+    required: false
+    default: ".coverage"
+  output-path:
+    description: "Where to write the generated SVG badge."
+    required: false
+    default: "coverage.svg"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install coverage
+      shell: bash
+      run: pip install --quiet --disable-pip-version-check coverage
+
+    - name: Generate badge
+      shell: bash
+      run: |
+        python "${{ github.action_path }}/generate_badge.py" \
+          --data-file "${{ inputs.data-file }}" \
+          --output "${{ inputs.output-path }}"
