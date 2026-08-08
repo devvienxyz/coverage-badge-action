@@ -1,4 +1,4 @@
-name: "Coverage Badge"
+name: "Static Coverage Badge"
 description: "Generates a flat SVG badge from a coverage.py data file - no external services, no API tokens."
 author: "devvienxyz"
 branding:
