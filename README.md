@@ -60,19 +60,24 @@ Vitest) and needs no installs beyond the Node already on the runner. The badge l
 
 ```yaml
 - name: Test
-  run: >
-    node --test --experimental-test-coverage
-    --test-reporter=spec --test-reporter-destination=stdout
-    --test-reporter=lcov --test-reporter-destination=lcov.info
+  run: |
+    set -o pipefail
+    node --test --experimental-test-coverage \
+      --test-reporter=spec --test-reporter-destination=stdout \
+      --test-reporter=lcov --test-reporter-destination=lcov.info | tee test-output.txt
 
-- name: Generate coverage badge
+- name: Generate badges
   uses: devvienxyz/coverage-badge-action/node@v1
   with:
-    lcov-file: lcov.info       # optional, defaults to lcov.info
-    output-path: coverage.svg  # optional, defaults to coverage.svg
+    lcov-file: lcov.info            # optional, defaults to lcov.info
+    output-path: coverage.svg       # optional, defaults to coverage.svg
+    test-output: test-output.txt    # optional, also writes a tests badge
+    tests-output-path: tests.svg    # optional, defaults to tests.svg
 ```
 
 The percentage is line coverage: total `LH` over total `LF` across every file in the lcov data.
+With `test-output` set, the action also reads the runner's `tests N` summary (spec `ℹ tests N` or
+TAP `# tests N`) and writes a `tests | N passed` badge. Run it only after a passing test step.
 
 ## Inputs
 
@@ -87,6 +92,8 @@ Node version (`/node`):
 | ------------- | -------------- | ----------------------------------------------- |
 | `lcov-file`   | `lcov.info`    | lcov file to read.                              |
 | `output-path` | `coverage.svg` | Where to write the generated SVG.                |
+| `test-output` | (unset)        | Saved test output; when set, a tests badge is written too. |
+| `tests-output-path` | `tests.svg` | Where to write the tests badge.            |
 
 ## Color thresholds
 
