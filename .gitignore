@@ -6,3 +6,5 @@ __pycache__/
 .coverage
 coverage.svg
 lcov.info
+test-output.txt
+tests.svg
