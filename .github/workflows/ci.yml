@@ -48,17 +48,20 @@ jobs:
           node-version: 22
 
       - name: Test with lcov coverage
-        run: >
-          node --test --experimental-test-coverage
-          --test-reporter=spec --test-reporter-destination=stdout
-          --test-reporter=lcov --test-reporter-destination=lcov.info
-          node/*.test.js
+        run: |
+          set -o pipefail
+          node --test --experimental-test-coverage \
+            --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=lcov --test-reporter-destination=lcov.info \
+            node/*.test.js | tee test-output.txt
 
-      - name: Integration check - run the Node action against its own lcov data
+      - name: Integration check - run the Node action against its own lcov data and test output
         uses: ./node
         with:
           lcov-file: lcov.info
           output-path: coverage.svg
+          test-output: test-output.txt
+          tests-output-path: tests.svg
 
-      - name: Verify the badge was written
-        run: test -s coverage.svg && head -c 200 coverage.svg
+      - name: Verify the badges were written
+        run: test -s coverage.svg && test -s tests.svg && head -c 200 tests.svg
