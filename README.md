@@ -79,6 +79,14 @@ The percentage is line coverage: total `LH` over total `LF` across every file in
 With `test-output` set, the action also reads the runner's `tests N` summary (spec `ℹ tests N` or
 TAP `# tests N`) and writes a `tests | N passed` badge. Run it only after a passing test step.
 
+## Examples
+
+Complete workflows to copy into `.github/workflows/`:
+
+- [`examples/python.yml`](examples/python.yml): coverage badge committed back to each PR branch.
+- [`examples/node.yml`](examples/node.yml): tests + coverage badges published to an orphan `badges`
+  branch on every push to `main`, so nothing commits to protected branches. Works in private repos.
+
 ## Inputs
 
 | Name          | Default        | Description                                    |
