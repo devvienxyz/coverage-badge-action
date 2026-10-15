@@ -1,0 +1,26 @@
+name: "Static Coverage Badge (Node)"
+description: "Generates a flat SVG badge from an lcov coverage file - no external services, no API tokens."
+author: "devvienxyz"
+branding:
+  icon: "percent"
+  color: "green"
+
+inputs:
+  lcov-file:
+    description: "Path to the lcov file produced by your test runner (node --test, c8, nyc, jest, vitest)."
+    required: false
+    default: "lcov.info"
+  output-path:
+    description: "Where to write the generated SVG badge."
+    required: false
+    default: "coverage.svg"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Generate badge
+      shell: bash
+      run: |
+        node "${{ github.action_path }}/generate-badge.js" \
+          --lcov-file "${{ inputs.lcov-file }}" \
+          --output "${{ inputs.output-path }}"
