@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// Generate a flat SVG coverage badge from an lcov file - no external services.
+// Generate flat SVG coverage (and optional test count) badges - no external services.
 
 const fs = require('node:fs');
+const path = require('node:path');
 const { parseArgs } = require('node:util');
 
 function coveragePercent(lcov) {
@@ -21,10 +22,22 @@ function colorFor(percent) {
   return '#e05d44';
 }
 
+function testCount(output) {
+  const m = output.match(/^(?:ℹ|#) tests (\d+)$/m);
+  if (!m) throw new Error('no "tests N" summary found in test output');
+  return Number(m[1]);
+}
+
 function badgeSvg(percent) {
-  const label = 'coverage';
-  const value = `${percent}%`;
-  const labelWidth = 61;
+  return flatBadge('coverage', `${percent}%`, colorFor(percent));
+}
+
+function testsBadgeSvg(count) {
+  return flatBadge('tests', `${count} passed`, '#4c1');
+}
+
+function flatBadge(label, value, color) {
+  const labelWidth = 5 + label.length * 7;
   const valueWidth = 8 + value.length * 7;
   const totalWidth = labelWidth + valueWidth;
   const labelX = labelWidth / 2;
@@ -40,7 +53,7 @@ function badgeSvg(percent) {
   </mask>
   <g mask="url(#a)">
     <rect width="${labelWidth}" height="20" fill="#555"/>
-    <rect x="${labelWidth}" width="${valueWidth}" height="20" fill="${colorFor(percent)}"/>
+    <rect x="${labelWidth}" width="${valueWidth}" height="20" fill="${color}"/>
     <rect width="${totalWidth}" height="20" fill="url(#b)"/>
   </g>
   <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
@@ -53,19 +66,32 @@ function badgeSvg(percent) {
 `;
 }
 
+function write(file, content) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, content);
+}
+
 function main(argv) {
   const { values } = parseArgs({
     args: argv,
     options: {
       'lcov-file': { type: 'string', default: 'lcov.info' },
       output: { type: 'string', default: 'coverage.svg' },
+      'test-output': { type: 'string', default: '' },
+      'tests-output': { type: 'string', default: 'tests.svg' },
     },
   });
   const percent = coveragePercent(fs.readFileSync(values['lcov-file'], 'utf8'));
-  fs.writeFileSync(values.output, badgeSvg(percent));
+  write(values.output, badgeSvg(percent));
   console.log(`Wrote ${values.output} (${percent}% coverage)`);
+
+  if (values['test-output']) {
+    const count = testCount(fs.readFileSync(values['test-output'], 'utf8'));
+    write(values['tests-output'], testsBadgeSvg(count));
+    console.log(`Wrote ${values['tests-output']} (${count} tests)`);
+  }
 }
 
 if (require.main === module) main(process.argv.slice(2));
 
-module.exports = { coveragePercent, colorFor, badgeSvg, main };
+module.exports = { coveragePercent, testCount, colorFor, badgeSvg, testsBadgeSvg, main };
