@@ -1,0 +1,65 @@
+# Copy to .github/workflows/ in a Node repo. Writes tests + coverage badges on every push to main
+# and publishes them to an orphan `badges` branch, so no bot commits land on protected branches.
+#
+# README:
+#   ![tests](https://github.com/<owner>/<repo>/raw/badges/tests.svg)
+#   ![coverage](https://github.com/<owner>/<repo>/raw/badges/coverage.svg)
+name: Badges
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Test with coverage
+        run: |
+          set -o pipefail
+          node --test --experimental-test-coverage \
+            --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=lcov --test-reporter-destination=lcov.info | tee test-output.txt
+
+      - name: Generate badges
+        uses: devvienxyz/coverage-badge-action/node@v1
+        with:
+          lcov-file: lcov.info
+          output-path: badges/coverage.svg
+          test-output: test-output.txt
+          tests-output-path: badges/tests.svg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: badges
+          path: badges/
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: badges
+          path: badges
+
+      - name: Push badges branch
+        working-directory: badges
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git init -q -b badges
+          git add .
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "chore: update badges"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" badges
