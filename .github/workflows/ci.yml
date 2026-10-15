@@ -36,3 +36,29 @@ jobs:
 
       - name: Verify the badge was written
         run: test -s coverage.svg && head -c 200 coverage.svg
+
+  node:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Test with lcov coverage
+        run: >
+          node --test --experimental-test-coverage
+          --test-reporter=spec --test-reporter-destination=stdout
+          --test-reporter=lcov --test-reporter-destination=lcov.info
+          node/*.test.js
+
+      - name: Integration check - run the Node action against its own lcov data
+        uses: ./node
+        with:
+          lcov-file: lcov.info
+          output-path: coverage.svg
+
+      - name: Verify the badge was written
+        run: test -s coverage.svg && head -c 200 coverage.svg
