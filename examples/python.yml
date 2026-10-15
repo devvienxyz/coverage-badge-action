@@ -1,0 +1,40 @@
+# Copy to .github/workflows/ in a Python repo. Regenerates coverage.svg on each PR push and
+# commits it back to the PR branch.
+#
+# README:
+#   ![coverage](coverage.svg)
+name: Coverage badge
+
+on:
+  pull_request:
+
+jobs:
+  badge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - run: pip install pytest pytest-cov
+
+      - name: Test with coverage
+        run: pytest --cov=app
+
+      - name: Generate coverage badge
+        uses: devvienxyz/coverage-badge-action@v1
+        with:
+          data-file: .coverage
+          output-path: coverage.svg
+
+      - name: Commit updated badge
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update coverage badge"
+          file_pattern: coverage.svg
