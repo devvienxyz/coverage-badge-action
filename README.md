@@ -1,7 +1,7 @@
 # coverage-badge-action
 
 Generates a flat SVG coverage badge from a [coverage.py](https://coverage.readthedocs.io/) data
-file. No external services, no API tokens, no rate limits - the badge is a plain SVG file you
+file, or from an lcov file with the [Node version](#node-version). No external services, no API tokens, no rate limits - the badge is a plain SVG file you
 commit to your repo and embed in your README.
 
 ```markdown
@@ -53,11 +53,39 @@ pip install coverage
 python generate_badge.py --data-file .coverage --output coverage.svg
 ```
 
+## Node version
+
+For JS/TS projects, use the `node` sub-action. It reads any lcov file (`node --test`, c8, nyc, Jest,
+Vitest) and needs no installs beyond the Node already on the runner. The badge looks the same.
+
+```yaml
+- name: Test
+  run: >
+    node --test --experimental-test-coverage
+    --test-reporter=spec --test-reporter-destination=stdout
+    --test-reporter=lcov --test-reporter-destination=lcov.info
+
+- name: Generate coverage badge
+  uses: devvienxyz/coverage-badge-action/node@v1
+  with:
+    lcov-file: lcov.info       # optional, defaults to lcov.info
+    output-path: coverage.svg  # optional, defaults to coverage.svg
+```
+
+The percentage is line coverage: total `LH` over total `LF` across every file in the lcov data.
+
 ## Inputs
 
 | Name          | Default        | Description                                    |
 | ------------- | -------------- | ----------------------------------------------- |
 | `data-file`   | `.coverage`    | Coverage data file to read.                     |
+| `output-path` | `coverage.svg` | Where to write the generated SVG.                |
+
+Node version (`/node`):
+
+| Name          | Default        | Description                                    |
+| ------------- | -------------- | ----------------------------------------------- |
+| `lcov-file`   | `lcov.info`    | lcov file to read.                              |
 | `output-path` | `coverage.svg` | Where to write the generated SVG.                |
 
 ## Color thresholds
@@ -71,6 +99,7 @@ most coverage services.
 uv sync
 uv run pytest
 uv run ruff check .
+node --test node/*.test.js
 ```
 
 ## License
